@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
  *  Create Consultation
  *  ========================= */
 export const createConsultation = async (req, res) => {
-    const { patientId, doctorId, illnessHistory, recentSurgery, familyMedicalHistory, paymentAmount } = req.body;
+    const { patientId, doctorId, currentIllness, recentSurgery, familyMedicalHistory, transactionId } = req.body;
 
     try {
         // Check if the doctor exists
@@ -22,39 +22,30 @@ export const createConsultation = async (req, res) => {
             return res.status(404).json({ message: 'Patient not found' });
         }
 
-        // Generate a unique transaction ID
-        const transactionId = uuidv4();
+        // Ensure a valid transaction ID is provided
+        if (!transactionId) {
+            return res.status(400).json({ message: 'Transaction ID is required' });
+        }
 
-        // Generate a QR code for payment
-        const paymentData = {
-            transactionId,
-            amount: paymentAmount,
-            description: `Payment for consultation with Dr. ${doctor.name}`,
-        };
-
-        const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(paymentData));
-
-        // Create a consultation entry in the database with initial payment status
+        // Create a consultation entry in the database
         const consultation = new Consultation({
             doctorId,
             patientId,
-            illnessHistory,
+            currentIllness,
             recentSurgery,
             familyMedicalHistory,
             payment: {
-                transactionId,
-                amount: paymentAmount,
-                status: 'Pending', // Payment status set to pending
+                transactionId, // Save the transaction ID provided by the frontend
             },
         });
-
+        console.log("consultation",consultation);
+        // Save the consultation to the database
         await consultation.save();
 
-        // Respond with QR code and consultation details
+        // Respond with consultation details
         res.status(201).json({
-            message: 'Consultation created successfully. Complete the payment to proceed.',
+            message: 'Consultation created successfully. Payment details recorded.',
             consultation,
-            qrCode: qrCodeUrl,
         });
     } catch (error) {
         console.error('Error creating consultation:', error.message);
@@ -149,5 +140,21 @@ export const getConsultationById = async (req, res) => {
         res.status(200).json(consultation);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching consultation', error: error.message });
+    }
+};
+export const getAllConsultations = async (req, res) => {
+    try {
+        const consultations = await Consultation.find()
+            .populate('patientId', 'name email') // Include patient details (name and email)
+            .populate('doctorId', 'name specialty'); // Include doctor details (name and specialty)
+
+        if (!consultations || consultations.length === 0) {
+            return res.status(404).json({ message: 'No consultations found' });
+        }
+
+        res.status(200).json(consultations);
+    } catch (error) {
+        console.error('Error fetching all consultations:', error.message);
+        res.status(500).json({ message: 'Error fetching all consultations', error: error.message });
     }
 };

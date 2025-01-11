@@ -53,7 +53,7 @@ const signupPatient = async (req, res) => {
                 historyOfSurgery,
                 historyOfIllness
             });
-
+            console.log(newPatient);
             // Save the patient to the database
             await newPatient.save();
 

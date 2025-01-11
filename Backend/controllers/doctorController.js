@@ -29,6 +29,7 @@ const signupDoctor = async (req, res) => {
             // Get the file URL from the upload (Multer stores it in the 'uploads/' folder)
             const profilePictureUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
+            console.log("profilePictureUrl",profilePictureUrl);
             // Create a new doctor with the profile picture URL
             const newDoctor = new Doctor({
                 name,

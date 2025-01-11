@@ -24,7 +24,8 @@ import {
     getConsultationsByDoctor,
     getConsultationsByPatient,
     updateConsultation,
-    deleteConsultation
+    deleteConsultation,
+    getAllConsultations
 } from '../controllers/consultationController.js';
 
 import {
@@ -32,7 +33,9 @@ import {
     getPrescriptionsByDoctor,
     getPrescriptionById,
     updatePrescription,
-    deletePrescription
+    deletePrescription,
+    getPrescriptionsByPatientId,
+    getPrescriptionsByDoctorAndPatient
 } from '../controllers/prescriptionController.js';
 
 import reqAuth from '../middleware/reqAuth.js';
@@ -68,6 +71,7 @@ router.get('/consultations/doctor/:doctorId', reqAuth, getConsultationsByDoctor)
 router.get('/consultations/patient/:patientId', reqAuth, getConsultationsByPatient); // Patient views their consultations
 router.put('/consultation/:id', reqAuth, updateConsultation); // Update consultation details
 router.delete('/consultation/:id', reqAuth, deleteConsultation); // Delete consultation
+router.get('/consultations', reqAuth, getAllConsultations); // Get all consultations
 
 /** =========================
  *  Prescription Routes
@@ -77,5 +81,7 @@ router.get('/prescriptions/doctor/:doctorId', reqAuth, getPrescriptionsByDoctor)
 router.get('/prescription/:id', reqAuth, getPrescriptionById); // View specific prescription
 router.put('/prescription/:id', reqAuth, updatePrescription); // Doctor edits a prescription
 router.delete('/prescription/:id', reqAuth, deletePrescription); // Delete prescription
+router.get('/prescriptions/patient/:patientId', reqAuth, getPrescriptionsByPatientId); // Get all prescriptions for a patient
+router.get('/prescriptions/doctor/:doctorId/patient/:patientId', reqAuth, getPrescriptionsByDoctorAndPatient); // Get all prescriptions for a patient
 
 export default router;

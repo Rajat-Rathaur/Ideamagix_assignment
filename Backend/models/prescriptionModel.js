@@ -6,7 +6,7 @@ const prescriptionSchema = new mongoose.Schema({
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
     careInstructions: { type: String, required: true },
     medicines: { type: String },
-    pdfPath: { type: String }, // Path to the generated PDF file
+    pdfPath: { type: String, required: true }, // Path to the generated PDF file
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date }
 });

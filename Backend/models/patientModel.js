@@ -6,8 +6,8 @@ const patientSchema = new mongoose.Schema({
     age: { type: Number, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true, unique: true },
-    historyOfSurgery: { type: [String] },
-    historyOfIllness: { type: [String] }, // Array to store multiple illnesses
+    historyOfSurgery: { type: String },
+    historyOfIllness: { type: String }, // Array to store multiple illnesses
     password: { type: String, required: true }, // Added password field
 });
 

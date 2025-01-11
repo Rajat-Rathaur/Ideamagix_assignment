@@ -3,37 +3,54 @@ import Consultation from '../models/consultationModel.js';
 import PDFDocument from 'pdfkit'; // For generating PDFs
 import fs from 'fs'; // For file system operations
 import path from 'path';
-
+import { upload } from '../middleware/fileUpload.js';
+import multer from 'multer';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 /** =========================
  *  Create Prescription
  *  ========================= */
 export const createPrescription = async (req, res) => {
-    const { consultationId, care, medicines } = req.body;
-
-    try {
-        // Ensure the consultation exists
-        const consultation = await Consultation.findById(consultationId);
-        if (!consultation) {
-            return res.status(404).json({ message: 'Consultation not found' });
+    upload.single("prescriptionPdf")(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ message: 'Error parsing form data', error: err.message });
         }
 
-        // Create the prescription
-        const prescription = new Prescription({
-            doctorId: consultation.doctorId,
-            patientId: consultation.patientId,
-            consultationId,
-            care,
-            medicines,
-        });
+        const { consultationId, careInstructions, medicines } = JSON.parse(req.body.prescriptionData);
 
-        await prescription.save();
+        console.log("req.body",consultationId, careInstructions, medicines);
+        console.log("req.file",req.file);
 
-        res.status(201).json({ message: 'Prescription created successfully', prescription });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating prescription', error: error.message });
-    }
+        try {
+            // Ensure the consultation exists
+            const consultation = await Consultation.findById(consultationId);
+            if (!consultation) {
+                return res.status(404).json({ message: 'Consultation not found' });
+            }
+
+            // Define the directory and file name to save the PDF
+            const pdfPath = req.file ? `/uploads/${req.file.filename}` : null;
+
+           console.log("fileName",pdfPath);
+
+            // Create the prescription in the database, including the path to the PDF file
+            const prescription = new Prescription({
+                doctorId: consultation.doctorId,
+                patientId: consultation.patientId,
+                consultationId,
+                careInstructions: careInstructions,
+                medicines,
+                pdfPath,
+            });
+
+            await prescription.save();
+
+            return res.status(201).json({ message: 'Prescription created successfully', prescription });
+        } catch (error) {
+            res.status(500).json({ message: 'Error creating prescription', error: error.message });
+        }
+    });
 };
-
 /** =========================
  *  Get Prescriptions by Doctor
  *  ========================= */
@@ -153,5 +170,45 @@ export const sendPrescriptionToPatient = async (req, res) => {
         res.status(200).json({ message: 'Prescription sent to patient successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error sending prescription', error: error.message });
+    }
+};
+export const getPrescriptionsByPatientId = async (req, res) => {
+    const { patientId } = req.params; // Extract patientId from the request URL
+
+    try {
+        // Find all prescriptions for the given patient ID
+        const prescriptions = await Prescription.find({ patientId })
+            .populate('doctorId', 'name specialty') // Populate doctor details if needed
+            .populate('consultationId', 'currentIllness') // Populate consultation details if needed
+            .exec();
+
+        if (prescriptions.length === 0) {
+            return res.status(404).json({ message: 'No prescriptions found for this patient' });
+        }
+
+        // Respond with the prescriptions
+        res.status(200).json(prescriptions);
+    } catch (error) {
+        console.error('Error fetching prescriptions:', error.message);
+        res.status(500).json({ message: 'Error fetching prescriptions', error: error.message });
+    }
+};
+
+export const getPrescriptionsByDoctorAndPatient = async (req, res) => {
+    const { doctorId, patientId } = req.params; // Extract both doctorId and patientId from params
+
+    try {
+        // Find prescriptions where both doctorId and patientId match
+        const prescriptions = await Prescription.find({ doctorId, patientId })
+            .populate('patientId', 'name email'); // Populate patient information
+
+        // If no prescriptions found, return a message indicating so
+        if (prescriptions.length === 0) {
+            return res.status(404).json({ message: 'No prescriptions found for this doctor and patient' });
+        }
+
+        res.status(200).json(prescriptions); // Return the found prescriptions
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching prescriptions', error: error.message });
     }
 };

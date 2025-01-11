@@ -46,7 +46,7 @@ function DoctorSignUp() {
         );
 
         console.log('Response:', response);
-        if (response.ok) {
+        if (response.status === 201) {
             
             setFlashMessage("Signup successful!");
             navigate('/doctor/signin'); // Redirect to doctor dashboard/home

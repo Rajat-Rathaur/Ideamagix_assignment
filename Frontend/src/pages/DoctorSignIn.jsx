@@ -25,9 +25,15 @@ function DoctorSignIn() {
 
       if (response.ok) {
         const { doctor, token } = await response.json();
+        
         // Store user data and token in localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(doctor));
+        
+        // Calculate expiration time (1 hour from now)
+        const expirationTime = Date.now() + 60 * 60 * 1000; // 1 hour in milliseconds
+        localStorage.setItem('tokenExpiration', expirationTime);
+      
         console.log('Login successful!');
         console.log('User:', doctor.name);  
         console.log('Token:', token);
@@ -39,8 +45,22 @@ function DoctorSignIn() {
         setTimeout(() => {
           navigate('/doctor/home');
         }, 1000);
-        
-      } else {
+      
+        // Set a timeout to remove the token and user after 1 hour
+        setTimeout(() => {
+          const storedExpirationTime = localStorage.getItem('tokenExpiration');
+          
+          if (storedExpirationTime && Date.now() >= storedExpirationTime) {
+            // Clear the token and user from localStorage after 1 hour
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('tokenExpiration');
+            console.log('Token and user have been removed from localStorage due to expiration.');
+            alert('Your session has expired. Please log in again.');
+          }
+        }, 60 * 60 * 1000); // Set the timeout to 1 hour
+      }
+       else {
         const errorData = await response.json();
         console.error('Login failed:', errorData.message);
         setFlashMessage('Login failed. Please try again.');

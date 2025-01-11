@@ -11,13 +11,12 @@ function PatientSignUp() {
         age: '',
         email: '',
         phone: '',
-        surgeryHistory: '',
-        illnessHistory: '',
+        historyOfSurgery: '',
+        historyOfIllness: '',
         password: '', // Added password to formData
     });
     const [profilePicture, setProfilePicture] = useState(null);
-    const [surgeryList, setSurgeryList] = useState([]);
-    const [illnessList, setIllnessList] = useState([]);
+  
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,24 +29,26 @@ function PatientSignUp() {
             formDataToSend.append('profilePicture', profilePicture);
         }
 
-        // Convert surgeryHistory and illnessHistory to arrays
-        const surgeryHistoryArray = formData.surgeryHistory
+        // Convert   historyOfSurgery and historyOfIllness to arrays
+      /*   const   historyOfSurgeryArray = formData.  historyOfSurgery
             .split(',')
             .map((item) => item.trim())
             .filter((item) => item !== '');
 
-        const illnessHistoryArray = formData.illnessHistory
+        const historyOfIllnessArray = formData.historyOfIllness
             .split(',')
             .map((item) => item.trim())
-            .filter((item) => item !== '');
+            .filter((item) => item !== ''); */
+          
+    
 
         // Add all other form fields to FormData
         formDataToSend.append('name', formData.name);
         formDataToSend.append('age', formData.age);
         formDataToSend.append('email', formData.email);
         formDataToSend.append('phone', formData.phone);
-        formDataToSend.append('surgeryHistory', JSON.stringify(surgeryHistoryArray));
-        formDataToSend.append('illnessHistory', JSON.stringify(illnessHistoryArray));
+        formDataToSend.append('historyOfSurgery', formData.historyOfSurgery);  // Send as string
+        formDataToSend.append('historyOfIllness', formData.historyOfIllness); 
         formDataToSend.append('password', formData.password); // Add password field
 
         try {
@@ -62,7 +63,7 @@ function PatientSignUp() {
             );
 
             console.log('Response:', response);
-            if (response.ok) {
+            if (response.status === 201) {
                 setFlashMessage("Signup successful!");
                 navigate('/patient/signin');
             } else {
@@ -78,16 +79,15 @@ function PatientSignUp() {
     };
 
     const handleSurgeryChange = (e) => {
-        const surgeryHistory = e.target.value;
-        setFormData({ ...formData, surgeryHistory });
-        setSurgeryList(surgeryHistory.split(',').map(item => item.trim()).filter(item => item)); // Split and filter empty items
-    };
+      const   historyOfSurgery = e.target.value;
+      setFormData({ ...formData, historyOfSurgery });
+  };
 
-    const handleIllnessChange = (e) => {
-        const illnessHistory = e.target.value;
-        setFormData({ ...formData, illnessHistory });
-        setIllnessList(illnessHistory.split(',').map(item => item.trim()).filter(item => item)); // Split and filter empty items
-    };
+  // Handle illness input change
+  const handleIllnessChange = (e) => {
+      const historyOfIllness = e.target.value;
+      setFormData({ ...formData, historyOfIllness });
+  };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col py-12 px-4 sm:px-6 lg:px-8">
@@ -226,65 +226,76 @@ function PatientSignUp() {
                             </div>
                         </div>
 
-                        {/* Surgery History Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300">
-                                History of Surgery
-                            </label>
-                            <div className="mt-1 relative">
-                                <textarea
-                                    rows={3}
-                                    className="block w-full px-4 py-3 pl-10 bg-gray-900/50 border border-gray-700 rounded-xl shadow-sm placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-                                    value={formData.surgeryHistory}
-                                    onChange={handleSurgeryChange}
-                                    placeholder="Enter surgeries separated by commas"
-                                />
-                                <ClipboardList className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
-                            </div>
-                            <div className="mt-2">
-                                <h4 className="text-sm font-medium text-gray-300">Surgery History:</h4>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                    {surgeryList.map((surgery, index) => (
-                                        <span
-                                            key={index}
-                                            className="bg-emerald-600 text-white py-1 px-3 rounded-full text-xs"
-                                        >
-                                            {surgery}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                       {/* Surgery History Input */}
+<div>
+    <label className="block text-sm font-medium text-gray-300">
+        History of Surgery
+    </label>
+    <div className="mt-1 relative">
+        <textarea
+            rows={3}
+            className="block w-full px-4 py-3 pl-10 bg-gray-900/50 border border-gray-700 rounded-xl shadow-sm placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+            value={formData.historyOfSurgery}
+            onChange={handleSurgeryChange}
+            placeholder="Enter surgeries separated by commas"
+        />
+        <ClipboardList className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+    </div>
+    <div className="mt-2">
+    <h4 className="text-sm font-medium text-gray-300">Surgery History:</h4>
+    <div className="mt-1">
+        {/* Render the surgery history as comma-separated */}
+        <span className="text-gray-400">
+            {formData.historyOfSurgery.split(',').map((surgery, index) => {
+                // Trim and filter out empty values
+                const trimmedSurgery = surgery.trim();
+                if (trimmedSurgery === "") return null;
+                return (
+                    <span key={index} className="bg-emerald-600 text-white py-1 px-3 rounded-full text-xs mr-2">
+                        {trimmedSurgery}
+                    </span>
+                );
+            })}
+        </span>
+    </div>
+</div>
+</div>
 
-                        {/* Illness History Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300">
-                                History of Illness
-                            </label>
-                            <div className="mt-1 relative">
-                                <textarea
-                                    rows={3}
-                                    className="block w-full px-4 py-3 pl-10 bg-gray-900/50 border border-gray-700 rounded-xl shadow-sm placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-                                    value={formData.illnessHistory}
-                                    onChange={handleIllnessChange}
-                                    placeholder="Enter illnesses separated by commas"
-                                />
-                                <Stethoscope className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
-                            </div>
-                            <div className="mt-2">
-                                <h4 className="text-sm font-medium text-gray-300">Illness History:</h4>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                    {illnessList.map((illness, index) => (
-                                        <span
-                                            key={index}
-                                            className="bg-emerald-600 text-white py-1 px-3 rounded-full text-xs"
-                                        >
-                                            {illness}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+{/* Illness History Input */}
+<div>
+    <label className="block text-sm font-medium text-gray-300">
+        History of Illness
+    </label>
+    <div className="mt-1 relative">
+        <textarea
+            rows={3}
+            className="block w-full px-4 py-3 pl-10 bg-gray-900/50 border border-gray-700 rounded-xl shadow-sm placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+            value={formData.historyOfIllness}
+            onChange={handleIllnessChange}
+            placeholder="Enter illnesses separated by commas"
+        />
+        <Stethoscope className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+    </div>
+    <div className="mt-2">
+    <h4 className="text-sm font-medium text-gray-300">Illness History:</h4>
+    <div className="mt-1">
+        {/* Render the illness history as comma-separated */}
+        <span className="text-gray-400">
+            {formData.historyOfIllness.split(',').map((illness, index) => {
+                // Trim and filter out empty values
+                const trimmedIllness = illness.trim();
+                if (trimmedIllness === "") return null;
+                return (
+                    <span key={index} className="bg-emerald-600 text-white py-1 px-3 rounded-full text-xs mr-2">
+                        {trimmedIllness}
+                    </span>
+                );
+            })}
+        </span>
+    </div>
+</div>
+</div>
+
 
                         <div>
                             <button

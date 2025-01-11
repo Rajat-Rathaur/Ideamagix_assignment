@@ -9,7 +9,9 @@ import PatientHome from './components/PatientHome';
 import ProtectedRoute from './pages/ProtectedRoute';
 import Error from './components/Error';
 import DoctorConsultation from './components/DoctorConsultation';
-import PrescriptionPage from './components/PatientPrescription';
+import PatientPrescription  from './components/PatientPrescription';
+import PatientProfile from './pages/PatientProfile';
+import DoctorPrescription from './components/DoctorPrescription';
 function App() {
   return (
     // Wrap your entire app with Router
@@ -36,7 +38,15 @@ function App() {
           />
                  <Route
             path="/prescriptions/doctor/:doctorId"
-            element={<ProtectedRoute element={<PrescriptionPage />} />}
+            element={<ProtectedRoute element={<PatientPrescription  />} />}
+          />
+          <Route
+            path="/patient/profile/:id"
+            element={<ProtectedRoute element={<PatientProfile />} />}
+            />
+            <Route
+            path="/doctor/prescription"
+            element={<ProtectedRoute element={<DoctorPrescription />} />}
           />
       </Routes>
     </Router>

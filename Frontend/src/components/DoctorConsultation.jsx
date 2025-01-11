@@ -7,34 +7,35 @@ const DoctorConsultation = () => {
   const [doctor, setDoctor] = useState(null);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    illnessHistory: '',
-    surgeryHistory: '',
-    familyHistory: {
-      diabetes: '',
+    currentIllness: '',
+    recentSurgery: '',
+    familyMedicalHistory: {
+      diabeticStatus: '',
       allergies: '',
       others: ''
     },
     transactionId: ''
   });
 
+  // Fetch doctor details using the doctorId from the URL
   useEffect(() => {
-    // Fetch doctor details using the doctorId from the URL
     const fetchDoctor = async () => {
-        const token = localStorage.getItem('token');
-          
-        // If there's no token, you might want to handle the case (e.g., redirect to login)
-        if (!token) {
-            console.error('No token found, please log in');
-            return;
-        }
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No token found, please log in');
+        return;
+      }
+
       try {
         const response = await fetch(`http://localhost:5000/user/doctor/${doctorId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`, // Attach token as Bearer token
-            },
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
         });
+
         const data = await response.json();
         setDoctor(data.doctor);
       } catch (error) {
@@ -45,13 +46,14 @@ const DoctorConsultation = () => {
     fetchDoctor();
   }, [doctorId]);
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('familyHistory')) {
+    if (name.includes('familyMedicalHistory')) {
       setFormData({
         ...formData,
-        familyHistory: {
-          ...formData.familyHistory,
+        familyMedicalHistory: {
+          ...formData.familyMedicalHistory,
           [name.split('.')[1]]: value
         }
       });
@@ -63,22 +65,45 @@ const DoctorConsultation = () => {
     }
   };
 
+  // Validate if the form data is complete for each step
+  const isStepValid = () => {
+    if (step === 1) {
+      return formData.currentIllness && formData.recentSurgery;
+    }
+    if (step === 2) {
+      return formData.familyMedicalHistory.diabeticStatus && formData.familyMedicalHistory.allergies;
+    }
+    if (step === 3) {
+      return formData.transactionId;
+    }
+    return false;
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Save consultation data to the database
+    const token = localStorage.getItem('token'); // Retrieve token from localStorage
+    const patientId = JSON.parse(localStorage.getItem('user')).id; 
+  
+    if (!token) {
+      console.error('No token found, please log in');
+      alert('You are not authenticated. Please log in.');
+      return;
+    }
     try {
       const response = await fetch(`http://localhost:5000/user/consultation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ doctorId, ...formData })
+        body: JSON.stringify({ doctorId, patientId,...formData })
       });
-
+console.log(response);
+console.log("formdata",formData)
       if (response.ok) {
         alert('Consultation details submitted successfully!');
-        // Redirect to a confirmation page or home
+       
       } else {
         alert('Failed to submit consultation details');
       }
@@ -95,24 +120,27 @@ const DoctorConsultation = () => {
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen">
       <h1 className="text-3xl font-semibold text-gray-100 mb-6">Consultation with Dr. {doctor.name}</h1>
-      
+
       {/* Step Navigation */}
       <div className="mb-6">
         <button
           onClick={() => setStep(1)}
           className={`px-4 py-2 ${step === 1 ? 'bg-blue-600' : 'bg-gray-600'} text-white rounded-md`}
+          disabled={step === 1}
         >
           Step 1
         </button>
         <button
           onClick={() => setStep(2)}
           className={`ml-4 px-4 py-2 ${step === 2 ? 'bg-blue-600' : 'bg-gray-600'} text-white rounded-md`}
+          disabled={step === 1 || !isStepValid()}
         >
           Step 2
         </button>
         <button
           onClick={() => setStep(3)}
           className={`ml-4 px-4 py-2 ${step === 3 ? 'bg-blue-600' : 'bg-gray-600'} text-white rounded-md`}
+          disabled={step === 2 || !isStepValid()}
         >
           Step 3
         </button>
@@ -122,22 +150,22 @@ const DoctorConsultation = () => {
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <label htmlFor="illnessHistory" className="block text-sm text-gray-400">Current Illness History</label>
+            <label htmlFor="currentIllness" className="block text-sm text-gray-400">Current Illness History</label>
             <textarea
-              id="illnessHistory"
-              name="illnessHistory"
+              id="currentIllness"
+              name="currentIllness"
               className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-              value={formData.illnessHistory}
+              value={formData.currentIllness}
               onChange={handleInputChange}
             />
           </div>
           <div>
-            <label htmlFor="surgeryHistory" className="block text-sm text-gray-400">Recent Surgery History (time span)</label>
+            <label htmlFor="recentSurgery" className="block text-sm text-gray-400">Recent Surgery History (time span)</label>
             <textarea
-              id="surgeryHistory"
-              name="surgeryHistory"
+              id="recentSurgery"
+              name="recentSurgery"
               className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-              value={formData.surgeryHistory}
+              value={formData.recentSurgery}
               onChange={handleInputChange}
             />
           </div>
@@ -147,18 +175,17 @@ const DoctorConsultation = () => {
       {/* Step 2: Family Medical History */}
       {step === 2 && (
         <div className="space-y-4">
-           
           <div>
-          <h1 className='text-3xl'>Family medical history</h1>
-            <label htmlFor="diabetes" className="block text-sm text-gray-400">Diabetes</label>
+            <h1 className='text-3xl'>Family Medical History</h1>
+            <label htmlFor="diabeticStatus" className="block text-sm text-gray-400">diabeticStatus</label>
             <div className="flex space-x-4">
               <div>
                 <input
                   type="radio"
                   id="diabetic"
-                  name="familyHistory.diabetes"
+                  name="familyMedicalHistory.diabeticStatus"
                   value="Diabetic"
-                  checked={formData.familyHistory.diabetes === 'Diabetic'}
+                  checked={formData.familyMedicalHistory.diabeticStatus === 'Diabetic'}
                   onChange={handleInputChange}
                 />
                 <label htmlFor="diabetic" className="text-sm text-gray-300">Diabetic</label>
@@ -167,9 +194,9 @@ const DoctorConsultation = () => {
                 <input
                   type="radio"
                   id="nonDiabetic"
-                  name="familyHistory.diabetes"
+                  name="familyMedicalHistory.diabeticStatus"
                   value="Non-Diabetic"
-                  checked={formData.familyHistory.diabetes === 'Non-Diabetic'}
+                  checked={formData.familyMedicalHistory.diabeticStatus === 'Non-Diabetic'}
                   onChange={handleInputChange}
                 />
                 <label htmlFor="nonDiabetic" className="text-sm text-gray-300">Non-Diabetic</label>
@@ -181,9 +208,9 @@ const DoctorConsultation = () => {
             <input
               type="text"
               id="allergies"
-              name="familyHistory.allergies"
+              name="familyMedicalHistory.allergies"
               className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-              value={formData.familyHistory.allergies}
+              value={formData.familyMedicalHistory.allergies}
               onChange={handleInputChange}
             />
           </div>
@@ -192,9 +219,9 @@ const DoctorConsultation = () => {
             <input
               type="text"
               id="others"
-              name="familyHistory.others"
+              name="familyMedicalHistory.others"
               className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-              value={formData.familyHistory.others}
+              value={formData.familyMedicalHistory.others}
               onChange={handleInputChange}
             />
           </div>
@@ -203,46 +230,65 @@ const DoctorConsultation = () => {
 
       {/* Step 3: Payment QR Code */}
       {step === 3 && (
-  <div className="space-y-4">
-    {/* Transaction ID Input */}
-    <div>
-      <label htmlFor="transactionId" className="block text-sm text-gray-400">Transaction ID</label>
-      <input
-        type="text"
-        id="transactionId"
-        name="transactionId"
-        className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
-        value={formData.transactionId}
-        onChange={handleInputChange}
-      />
-    </div>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="transactionId" className="block text-sm text-gray-400">Transaction ID</label>
+            <input
+              type="text"
+              id="transactionId"
+              name="transactionId"
+              className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
+              value={formData.transactionId}
+              onChange={handleInputChange}
+            />
+          </div>
 
-    {/* Generate QR Code */}
-    <div className="mt-4">
-      <QRCode
-        value={`http://localhost:5000/payment/${formData.transactionId}`}  // The URL or data for payment
-        size={256}
-        fgColor="#ffffff"  // QR code color
-        bgColor="#000000"  // Background color of QR code
-      />
-    </div>
+          {/* Generate QR Code */}
+          <div className="mt-4">
+            <QRCode
+              value={`http://localhost:5000/payment/${formData.transactionId}`}
+              size={256}
+              fgColor="#ffffff"
+              bgColor="#000000"
+            />
+          </div>
 
-    {/* Display QR Code Link */}
-    <p className="text-sm text-gray-400 mt-2">
-      Scan this QR code to complete your payment. Make sure to enter the transaction ID after completing the payment.
-    </p>
-  </div>
-)}
+          {/* Display QR Code Link */}
+          <p className="text-sm text-gray-400 mt-2">
+            Scan this QR code to complete your payment. Make sure to enter the transaction ID after completing the payment.
+          </p>
+        </div>
+      )}
 
+      {/* Step Navigation Buttons */}
+      <div className="mt-6 flex justify-between">
+        {step > 1 && (
+          <button
+            onClick={() => setStep(step - 1)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          >
+            Back
+          </button>
+        )}
 
-      {/* Submit Button */}
-      <div className="mt-6">
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:outline-none"
-        >
-          Submit Consultation
-        </button>
+        {step < 3 && (
+          <button
+            onClick={() => setStep(step + 1)}
+            className={`px-4 py-2 ${isStepValid() ? 'bg-blue-600' : 'bg-gray-600'} text-white rounded-md`}
+            disabled={!isStepValid()}
+          >
+            Next
+          </button>
+        )}
+
+        {step === 3 && (
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Submit Consultation
+          </button>
+        )}
       </div>
     </div>
   );
