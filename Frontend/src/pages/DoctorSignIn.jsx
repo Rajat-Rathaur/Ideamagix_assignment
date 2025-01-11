@@ -64,6 +64,7 @@ function DoctorSignIn() {
         const errorData = await response.json();
         console.error('Login failed:', errorData.message);
         setFlashMessage('Login failed. Please try again.');
+        alert('Login failed. Please try again.');
       }
     } catch (error) {
       console.error('Login failed:', error);
