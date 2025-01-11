@@ -1,6 +1,6 @@
 clone the project 
 
-cd frontend and cdbackend on two different terminals 
+cd frontend and cd backend on two different terminals 
 
 do npm i in both 
 
