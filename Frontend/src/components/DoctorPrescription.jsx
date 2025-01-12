@@ -17,7 +17,7 @@ const DoctorPrescription = () => {
   const [activeView, setActiveView] = useState(null); // 'write' or 'view'
   const navigate = useNavigate();
   const doctorId = JSON.parse(localStorage.getItem('user'));
-console.log(prescriptions);
+
   useEffect(() => {
     const fetchConsultations = async () => {      
       try {
@@ -69,6 +69,27 @@ console.log(prescriptions);
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+const deletePrescription = async (prescriptionId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/user/prescription/${prescriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.ok) {
+        alert('Prescription deleted successfully');
+        handleViewPrescription(selectedConsultation.patientId._id);
+      } else {
+        const errorData = await response.json();
+        alert('Failed to delete prescription: ' + (errorData.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error deleting prescription:', error);
+      alert('An error occurred while deleting the prescription.');
     }
   };
 
@@ -244,7 +265,7 @@ console.log(prescriptions);
         {activeView === 'view' && prescriptions.length > 0 && (
           <div className="space-y-4 mt-8">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-100">Prescriptions</h2>
+              <h2 className="text-2xl font-semibold text-gray-100">Prescriptions :- {prescriptions.length}</h2>
               <button
                 onClick={() => setActiveView(null)}
                 className="text-sm text-gray-400 hover:text-gray-200"
@@ -305,9 +326,19 @@ console.log(prescriptions);
                     )}
                   </div>
                 )}
+                     <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => deletePrescription(prescription._id)}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Delete Prescription
+            </button>
+          </div>
               </div>
             ))}
+                
           </div>
+          
         )}
       </div>
     </div>
