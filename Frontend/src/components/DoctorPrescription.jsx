@@ -17,7 +17,7 @@ const DoctorPrescription = () => {
   const [activeView, setActiveView] = useState(null); // 'write' or 'view'
   const navigate = useNavigate();
   const doctorId = JSON.parse(localStorage.getItem('user'));
-  console.log(`Fetched consultations:`, consultations);
+console.log(prescriptions);
   useEffect(() => {
     const fetchConsultations = async () => {      
       try {
@@ -255,12 +255,14 @@ const DoctorPrescription = () => {
             {prescriptions.map((prescription) => (
               <div key={prescription._id} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-100">Prescription Details</h3>
+                  <h3 className="text-xl font-semibold text-gray-100">Prescription Details for {`${prescription.patientId.name}`}</h3>
                   <span className="text-sm text-gray-400">
                     {new Date(prescription.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="mt-4">
+                  <p>Consultation Id: {`${prescription.consultationId}`}</p>
+                  <p>Prescription Id: {`${prescription._id}`}</p>
                   <h4 className="text-sm text-gray-400">Medicines:</h4>
                   <p className="text-sm text-gray-200">{prescription.medicines}</p>
                   <h4 className="text-sm text-gray-400 mt-2">Care Instructions:</h4>

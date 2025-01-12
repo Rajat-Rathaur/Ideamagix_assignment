@@ -35,7 +35,7 @@ function PatientSignIn() {
         localStorage.setItem('user', JSON.stringify(patient));
         
         // Calculate expiration time (1 hour from now)
-        const expirationTime = Date.now() + 60 * 60 * 1000; // 1 hour in milliseconds
+        const expirationTime = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('tokenExpiration', expirationTime);
       
         console.log('Login successful!');

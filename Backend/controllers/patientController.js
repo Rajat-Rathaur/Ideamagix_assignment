@@ -58,7 +58,7 @@ const signupPatient = async (req, res) => {
             await newPatient.save();
 
             // Generate a JWT token
-            const token = jwt.sign({ email: newPatient.email, id: newPatient._id }, SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ email: newPatient.email, id: newPatient._id }, SECRET, { expiresIn: '1d' });
 
             // Set JWT token as a cookie
             res.cookie("jwt", token, {
@@ -91,7 +91,7 @@ const signinPatient = async (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ email: patient.email, id: patient._id }, SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ email: patient.email, id: patient._id }, SECRET, { expiresIn: '1d' });
 
         // Send the token as a cookie
         res.cookie("jwt", token, {
