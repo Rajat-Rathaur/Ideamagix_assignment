@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link ,useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react'; // Import ArrowLeft from lucide-react
+import axios from 'axios';
 
 const DoctorHome = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
   const navigate = useNavigate(); // Use the navigate hook from react-router-dom
   const baseUrl = 'http://localhost:5000'; 
   const [doctor, setDoctor] = useState(null);
@@ -11,7 +14,7 @@ const DoctorHome = () => {
     name: '',
     email: '',
     phone: '',
-    profilePicture: '',
+    profilePicture: null,
     specialty: '',
     experience: '',
   });
@@ -19,30 +22,29 @@ const DoctorHome = () => {
   // Fetch doctor data from the backend
   useEffect(() => {
     const fetchDoctorData = async () => {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const token = localStorage.getItem('token');
-          
+   
+      
+
       if (!token) {
-          console.error('No token found, please log in');
-          return;
+        console.error('No token found, please log in');
+        return;
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/user/doctor/${user.id}`, {
-          method: 'GET',
+        const response = await axios.get(`${baseUrl}/user/doctor/${user.id}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Bearer token for auth
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        if (response.ok) {
-          const data = await response.json();
+        if (response.status === 200) {
+          const data = response.data;
           setDoctor(data.doctor);
           setFormData({
             name: data.doctor.name,
             email: data.doctor.email,
             phone: data.doctor.phone,
-            profilePicture: data.doctor.profilePicture,
+            profilePicture: null,
             specialty: data.doctor.specialty,
             experience: data.doctor.experience,
           });
@@ -61,6 +63,13 @@ const DoctorHome = () => {
     setIsEditing(true); // Enable the edit mode
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, profilePicture: file }));
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -72,22 +81,35 @@ const DoctorHome = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const formDataToSend = new FormData();
+
+    if (formData.profilePicture) {
+      formDataToSend.append('profilePicture', formData.profilePicture);
+    }
+
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('phone', formData.phone);
+    formDataToSend.append('specialty', formData.specialty);
+    formDataToSend.append('experience', formData.experience);
+
     try {
-      const response = await fetch('http://localhost:5000/user/doctor/update', {
-        method: 'PUT',
+      const response = await axios.put(`${baseUrl}/user/doctor/${user.id}`, formDataToSend, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Bearer token for auth
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setDoctor(data.updatedDoctor);
+      if (response.status === 200) {
+        const data = response.data;
+        console.log('Updated doctor:', data);
+        setDoctor(data.doctor);
         setIsEditing(false); // Exit edit mode
+        alert('Doctor profile updated successfully');
       } else {
         console.error('Error updating doctor profile');
+        alert('Error updating doctor profile');
       }
     } catch (error) {
       console.error('Error updating doctor profile:', error);
@@ -95,37 +117,34 @@ const DoctorHome = () => {
   };
 
   const handlePrescriptionClick = () => {
-    // Navigate to the Prescription page
-    navigate('/doctor/prescription'); // Adjust the URL as per your routing setup
+    navigate('/doctor/prescription');
   };
 
   const handleLogoutClick = () => {
-    // Clear localStorage and navigate to the login page
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    navigate('/'); // Adjust the URL as per your routing setup
+    navigate('/');
   };
 
   const handleBackClick = () => {
-    setIsEditing(false); // Cancel editing when back arrow is clicked
+    setIsEditing(false);
   };
 
   if (!doctor) {
-    return <div>Loading...</div>; // Show loading if data is not yet fetched
+    return <div>Loading...</div>;
   }
 
   const profileImageUrl = doctor.profilePicture
-    ? `${baseUrl}${doctor.profilePicture}` // Concatenate base URL with the image path
-    : 'https://via.placeholder.com/150'; // Default image if no profile picture
+    ? `${baseUrl}${doctor.profilePicture}`
+    : 'https://via.placeholder.com/150';
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       <div className="max-w-4xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-        {/* Show the back arrow icon when in edit mode */}
         {isEditing && (
           <Link
             to="#"
-            onClick={handleBackClick} // Use this to cancel the editing mode
+            onClick={handleBackClick}
             className="flex items-center text-blue-400 hover:text-blue-300 mb-6 group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
@@ -133,8 +152,7 @@ const DoctorHome = () => {
           </Link>
         )}
 
-        {/* Profile Display Section */}
-        {!isEditing ? (
+        {!isEditing && (
           <div className="flex justify-center mb-6">
             <img
               src={profileImageUrl}
@@ -142,7 +160,7 @@ const DoctorHome = () => {
               className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
             />
           </div>
-        ) : null}
+        )}
 
         <h1 className="text-3xl font-semibold text-center text-gray-100">{doctor.name}</h1>
         <p className="text-center text-gray-400">{doctor.specialty}</p>
@@ -159,20 +177,17 @@ const DoctorHome = () => {
             <span className="text-gray-400">{doctor.phone}</span>
           </div>
 
-          {/* Edit Button */}
-          {!isEditing ? (
+          {!isEditing && (
             <button
               onClick={handleEditClick}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Edit Profile
             </button>
-          ) : null}
+          )}
         </div>
 
-        {/* Buttons in the Same Line */}
         <div className="flex justify-between items-center mt-6">
-          {/* Logout Button (Left Aligned) */}
           <button
             onClick={handleLogoutClick}
             className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -180,7 +195,6 @@ const DoctorHome = () => {
             Logout
           </button>
 
-          {/* Prescription Button (Centered) */}
           <button
             onClick={handlePrescriptionClick}
             className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700"
@@ -189,19 +203,27 @@ const DoctorHome = () => {
           </button>
         </div>
 
-        {/* Edit Profile Form Section */}
         {isEditing && (
           <form onSubmit={handleSubmit} className="space-y-6 mt-6">
             <div>
-              <label className="block text-sm text-gray-400">Profile Picture (URL)</label>
+              <label className="block text-sm text-gray-400">Profile Picture</label>
               <input
-                type="text"
-                name="profilePicture"
-                value={formData.profilePicture}
-                onChange={handleChange}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
                 className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
               />
+              {formData.profilePicture && (
+                <div className="mt-4 flex justify-center">
+                  <img
+                    src={URL.createObjectURL(formData.profilePicture)}
+                    alt="Selected Profile"
+                    className="rounded-xl h-32 w-32 object-cover"
+                  />
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block text-sm text-gray-400">Name</label>
               <input
@@ -212,6 +234,7 @@ const DoctorHome = () => {
                 className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded-md"
               />
             </div>
+
             <div>
               <label className="block text-sm text-gray-400">Email</label>
               <input

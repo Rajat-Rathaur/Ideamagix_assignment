@@ -17,7 +17,7 @@ const DoctorPrescription = () => {
   const [activeView, setActiveView] = useState(null); // 'write' or 'view'
   const navigate = useNavigate();
   const doctorId = JSON.parse(localStorage.getItem('user'));
-
+  console.log(`Fetched consultations:`, consultations);
   useEffect(() => {
     const fetchConsultations = async () => {      
       try {
@@ -158,15 +158,19 @@ const DoctorPrescription = () => {
     <div className="p-6 bg-gray-900 text-white min-h-screen">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-semibold text-gray-100 mb-6">Consultations</h1>
-
+    
         {consultations.length === 0 ? (
           <p>No consultations found</p>
         ) : (
           <div className="space-y-4">
+           
             {consultations.map((consultation) => (
               <div key={consultation._id} className="p-4 bg-gray-800 rounded-lg border border-gray-700">
                 <h3 className="text-xl font-semibold">{consultation.patientId.name}</h3>
                 <p className="text-sm text-gray-400">Consultation ID: {consultation._id}</p>
+                <p className="text-sm text-gray-400">Current Illness: {consultation.currentIllness}</p>
+                <p className="text-sm text-gray-400">Recent Surgery: {consultation.recentSurgery}</p>
+                <p className="text-sm text-gray-400">Payment: {consultation.payment.transactionId}</p>
                 <div className="mt-4 space-x-4">
                   <button
                     className={`px-4 py-2 rounded-md ${

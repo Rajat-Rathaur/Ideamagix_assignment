@@ -133,22 +133,44 @@ const getPatientById = async (req, res) => {
 
 // Update Patient by ID
 const updatePatientById = async (req, res) => {
-    try {
-        const { name, email, age, phone, historyOfSurgery, historyOfIllness, profilePicture } = req.body;
-        const patient = await Patient.findByIdAndUpdate(
-            req.params.id,
-            { name, email, age, phone, historyOfSurgery, historyOfIllness, profilePicture },
-            { new: true }
-        );
-        if (!patient) {
-            return res.status(404).json({ message: "Patient not found" });
+    // Use Multer to handle the profile picture upload
+    upload.single('profilePicture')(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ message: err.message });
         }
-        return res.status(200).json({ patient });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Something went wrong" });
-    }
+
+        const { name, email, age, phone, historyOfSurgery, historyOfIllness } = req.body;
+
+        try {
+            // Check if the patient exists
+            const patient = await Patient.findById(req.params.id);
+            if (!patient) {
+                return res.status(404).json({ message: "Patient not found" });
+            }
+
+            // If a new profile picture is uploaded, update the URL
+            const profilePictureUrl = req.file ? `/uploads/${req.file.filename}` : patient.profilePicture;
+
+            // Update the patient's details
+            patient.name = name || patient.name;
+            patient.email = email || patient.email;
+            patient.age = age || patient.age;
+            patient.phone = phone || patient.phone;
+            patient.historyOfSurgery = historyOfSurgery || patient.historyOfSurgery;
+            patient.historyOfIllness = historyOfIllness || patient.historyOfIllness;
+            patient.profilePicture = profilePictureUrl;
+
+            // Save the updated patient details
+            const updatedPatient = await patient.save();
+
+            return res.status(200).json({ message: "Patient updated successfully", patient: updatedPatient });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Something went wrong" });
+        }
+    });
 };
+
 
 // Delete Patient by ID
 const deletePatientById = async (req, res) => {

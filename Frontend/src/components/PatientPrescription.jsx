@@ -24,13 +24,24 @@ const PatientPrescription = () => {
           }
         );
 
-        if (!response.ok) {
+      /*   if (!response.ok) {
           throw new Error('Failed to fetch prescriptions');
         }
 
         const data = await response.json();
         console.log('Fetched prescriptions:', data);
-        setPrescriptions(data);
+        setPrescriptions(data); */
+        if (response.status === 404) {
+          setError('No prescription Found. Consult Doctor to get prescription');
+          setPrescriptions([]);  // Clear any previous prescription data
+        } else if (!response.ok) {
+          throw new Error('Failed to fetch prescriptions');
+        } else {
+          const data = await response.json();
+          console.log('Fetched prescriptions:', data);
+          setPrescriptions(data);
+          setError(null); 
+        }
       } catch (error) {
         console.error('Error fetching prescriptions:', error);
         setError(error.message);
