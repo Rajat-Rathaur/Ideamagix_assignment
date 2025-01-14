@@ -27,7 +27,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // CORS Configuration
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://to-do-app-one-iota.vercel.app'], // Add your allowed origins
+  origin: ['http://localhost:5173'], // Add your allowed origins
   credentials: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Specify allowed HTTP methods
   allowedHeaders: 'Content-Type,Authorization', // Specify allowed headers
